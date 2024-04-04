@@ -3,11 +3,11 @@ const router = express.Router();
 const pool = require('../db'); // Import the pool instance
 
 router.post('/register', async (req, res) => {
-    const { nombre, descripcion } = req.body;
+    const { nombre, intensidad } = req.body;
     try {
         const client = await pool.connect();
 
-        const result = await client.query('INSERT INTO Sintomas (nombre, descripcion) VALUES ($1, $2) RETURNING *', [nombre, descripcion]);
+        const result = await client.query('INSERT INTO sintoma (nombre, intensidad) VALUES ($1, $2) RETURNING *', [nombre, intensidad]);
 
         res.status(200).json(result.rows[0]);
     } catch (error) {
@@ -21,7 +21,7 @@ router.get('/:nombre', async (req, res) => {
     try {
         const client = await pool.connect();
 
-        const result = await client.query('SELECT * FROM Sintomas WHERE nombre = $1', [nombre]);
+        const result = await client.query('SELECT * FROM sintoma WHERE nombre = $1', [nombre]);
 
         if (result.rows.length > 0) {
             const symptomData = result.rows[0];
@@ -37,12 +37,12 @@ router.get('/:nombre', async (req, res) => {
 
 router.put('/:nombre', async (req, res) => {
     const { nombre } = req.params;
-    const { descripcion } = req.body;
+    const { nombre2 } = req.body;
 
     try {
         const client = await pool.connect();
 
-        const result = await client.query('UPDATE Sintomas SET descripcion = $1 WHERE nombre = $2 RETURNING *', [descripcion, nombre]);
+        const result = await client.query('UPDATE sintoma SET descripcion = $1 WHERE nombre = $2 RETURNING *', [nombre, nombre2]);
 
         if (result.rows.length > 0) {
             const updatedSymptom = result.rows[0];
@@ -62,7 +62,7 @@ router.delete('/:nombre', async (req, res) => {
     try {
         const client = await pool.connect();
 
-        const result = await client.query('DELETE FROM Sintomas WHERE nombre = $1 RETURNING *', [nombre]);
+        const result = await client.query('DELETE FROM sintoma WHERE nombre = $1 RETURNING *', [nombre]);
 
         if (result.rows.length > 0) {
             const deletedSymptom = result.rows[0];

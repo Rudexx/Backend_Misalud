@@ -1,4 +1,4 @@
-const express = require('express');
+require('express');
 const router = express.Router();
 const pool = require('../db'); // Import the pool instance
 
@@ -36,16 +36,66 @@ router.post('/register', async (req, res) => {
     }
   });
 
-router.get('/:id', (req, res) => {
-    // Implementation for getting a specific user
+  router.get('/:email', async (req, res) => {
+    const { email } = req.params;
+    try {
+        const client = await pool.connect();
+
+        const result = await client.query('SELECT * FROM Usuario WHERE correo = $1', [email]);
+
+        if (result.rows.length > 0) {
+            const userData = result.rows[0]; // Assuming email is unique, so we take the first row
+            res.status(200).json(userData);
+        } else {
+            res.status(404).send('User not found');
+        }
+    } catch (error) {
+        res.status(500).send('Error retrieving user data');
+        console.error(error);
+    }
 });
 
-router.put('/:id', (req, res) => {
-    // Implementation for updating a user
+router.put('/:correo', async (req, res) => {
+  const { correo } = req.params;
+  const { username, password, telefono, fecha_nacimiento, profesion } = req.body;
+
+  try {
+      const client = await pool.connect();
+
+      const result = await client.query('UPDATE Usuario SET username = $1, password = $2, telefono = $3, fecha_nacimiento = $4, profesion = $5 WHERE correo = $6 RETURNING *', 
+        [username, password, telefono, fecha_nacimiento, profesion, correo]);
+
+      if (result.rows.length > 0) {
+          const updatedUser = result.rows[0];
+          res.status(200).json(updatedUser);
+      } else {
+          res.status(404).send('User not found');
+      }
+  } catch (error) {
+      res.status(500).send('Error updating user');
+      console.error(error);
+  }
 });
 
-router.delete('/:id', (req, res) => {
-    // Implementation for deleting a user
+router.delete('/:correo', async (req, res) => {
+  const { correo } = req.params;
+
+  try {
+      const client = await pool.connect();
+
+      const result = await client.query('DELETE FROM Usuario WHERE correo = $1 RETURNING *', [correo]);
+
+      if (result.rows.length > 0) {
+          const deletedUser = result.rows[0];
+          res.status(200).json(deletedUser);
+      } else {
+          res.status(404).send('User not found');
+      }
+  } catch (error) {
+      res.status(500).send('Error deleting user');
+      console.error(error);
+  }
 });
+
 
 module.exports = router;

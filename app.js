@@ -14,6 +14,12 @@ const diagnosticoRoute = require('./routes/diagnosticoRoute');
 app.use(express.json());
 app.use(cors());
 app.use(bodyParser.json());
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, GET, PUT");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  next();
+})
 
 
 // Mount routes
@@ -25,6 +31,6 @@ app.use('/api/symptoms', sintomasRoutes);
 
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server is running on http://0.0.0.0:${PORT}`);
 });

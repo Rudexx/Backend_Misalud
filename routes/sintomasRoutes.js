@@ -76,4 +76,25 @@ router.delete('/:nombre', async (req, res) => {
     }
 });
 
+router.get('/get/all', async (req, res) => {
+    const client = await pool.connect();
+    try {
+
+      const query = 'SELECT * FROM sintoma;';
+      const result = await client.query(query);
+  
+      if (result.rows.length > 0) {
+        res.status(200).json(result.rows);
+      } else {
+        res.status(404).json({ message: 'No symptoms found' });
+      }
+    } catch (error) {
+      console.error('Error fetching symptoms:', error);
+      res.status(500).json({ error: 'Error executing the query' });
+    } finally {
+      // Make sure to release the client back to the pool
+      client.release();
+    }
+  });
+
 module.exports = router;

@@ -3,19 +3,31 @@ const router = express.Router();
 const pool = require('../db'); // Import the pool instance
 
 router.post('/register', async (req, res) => {
-    const { nombre, descripcion, cantidad_disponible } = req.body;
+    const { nombre, descripcion, dosis, tipo_frec_recomendada, frec_recomendada, enf_id } = req.body;
+    
     try {
-        const client = await pool.connect();
-
-        const result = await client.query('INSERT INTO Medicamento (nombre, descripcion, cantidad_disponible) VALUES ($1, $2, $3) RETURNING *', 
-          [nombre, descripcion, cantidad_disponible]);
-
-        res.status(200).json(result.rows[0]);
+      const client = await pool.connect();
+      
+      // You might want to add validation to ensure that enf_id corresponds to an existing disease.
+      // This could involve a SELECT query to check the existence of enf_id in the enfermedad table.
+  
+      const query = `
+        INSERT INTO Medicamento (nombre, descripcion, dosis, tipo_frec_recomendada, frec_recomendada, enf_id)
+        VALUES ($1, $2, $3, $4, $5, $6) RETURNING med_id;
+      `;
+      const result = await client.query(query, [nombre, descripcion, dosis, tipo_frec_recomendada, frec_recomendada, enf_id]);
+      res.status(201).json({ 
+        message: 'Medication registered successfully', 
+        medicationId: result.rows[0].med_id
+      });
     } catch (error) {
-        res.status(500).send('Error registering medication');
-        console.error(error);
+      console.error('Error registering medication:', error);
+      res.status(500).json({ error: 'Error executing the query' });
+    } finally {
+      client.release();
     }
-});
+  });
+  
 
 router.get('/:id', async (req, res) => {
     const { id } = req.params;

@@ -69,80 +69,73 @@ router.post('/register', async (req, res) => {
   
 
 // Endpoint to link a symptom to a disease
-router.post('/:idEnfermedad/:idSintoma', (req, res) => {
-    const { idEnfermedad, idSintoma } = req.params;
-
-    const query = `
-      INSERT INTO enfermedad_sintoma (id_enfermedad, id_sintoma)
-      VALUES (?, ?);
-    `;
+router.post('/:idEnfermedad/:idSintoma', async (req, res) => {
+  const { idEnfermedad, idSintoma } = req.params;
+  client = await pool.connect(); 
+  const query = `
+    INSERT INTO enfermedad_sintoma (id_enfermedad, id_sintoma)
+    VALUES ($1, $2);
+  `;
   
-    connection.query(query, [idEnfermedad, idSintoma], (error, results) => {
-      if (error) {
-        return res.status(500).json({ error: error.message });
-      }
-      res.status(201).json({ message: 'Symptom linked to disease successfully', results });
-    });
+  client.query(query, [idEnfermedad, idSintoma], (error, results) => {
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+    res.status(201).json({ message: 'Symptom linked to disease successfully', results });
   });
+});
 
 router.get('/:nombre', async (req, res) => {
-    const { nombre } = req.params;
-    try {
-        const client = await pool.connect();
+  const { nombre } = req.params;
+  try {
+      const client = await pool.connect();
 
-        const result = await client.query('SELECT * FROM Enfermedad WHERE nombre = $1', [nombre]);
+      const result = await client.query('SELECT * FROM Enfermedad WHERE nombre = $1', [nombre]);
 
-        if (result.rows.length > 0) {
-            const diseaseData = result.rows[0];
-            res.status(200).json(diseaseData);
-        } else {
-            res.status(404).send('Disease not found');
-        }
-    } catch (error) {
-        res.status(500).send('Error retrieving disease data');
-        console.error(error);
-    }
+      if (result.rows.length > 0) {
+          const diseaseData = result.rows[0];
+          res.status(200).json(diseaseData);
+      } else {
+          res.status(404).send('Disease not found');
+      }
+  } catch (error) {
+      res.status(500).send('Error retrieving disease data');
+      console.error(error);
+  }
 });
 
-router.put('/:nombre', async (req, res) => {
-    const { nombre } = req.params;
-    const { descripcion } = req.body;
+// Endpoint to get all symptoms for a specific disease by disease ID
+router.get('/:idEnfermedad/symptoms', async (req, res) => {
+  const { idEnfermedad } = req.params;
 
-    try {
-        const client = await pool.connect();
-
-        const result = await client.query('UPDATE Enfermedad SET descripcion = $1 WHERE nombre = $2 RETURNING *', [descripcion, nombre]);
-
-        if (result.rows.length > 0) {
-            const updatedDisease = result.rows[0];
-            res.status(200).json(updatedDisease);
-        } else {
-            res.status(404).send('Disease not found');
-        }
-    } catch (error) {
-        res.status(500).send('Error updating disease');
-        console.error(error);
+  try {
+    // Obtain a client from the pool
+    const client = await pool.connect();
+    // Construct the query to get all symptoms for a given disease ID
+    // This involves a JOIN operation between the sintoma and enfermedad_sintoma tables
+    const query = `
+      SELECT s.*
+      FROM sintoma s
+      JOIN enfermedad_sintoma es ON s.id_sintoma = es.id_sintoma
+      WHERE es.id_enfermedad = $1;
+    `;
+      // Validate that idEnfermedad is an integer
+    if (!Number.isInteger(Number(idEnfermedad))) {
+      return res.status(400).send('idEnfermedad must be an integer');
     }
-});
+    // Execute the query
+    const result = await client.query(query, [idEnfermedad]);
 
-router.delete('/:nombre', async (req, res) => {
-    const { nombre } = req.params;
-
-    try {
-        const client = await pool.connect();
-
-        const result = await client.query('DELETE FROM Enfermedad WHERE nombre = $1 RETURNING *', [nombre]);
-
-        if (result.rows.length > 0) {
-            const deletedDisease = result.rows[0];
-            res.status(200).json(deletedDisease);
-        } else {
-            res.status(404).send('Disease not found');
-        }
-    } catch (error) {
-        res.status(500).send('Error deleting disease');
-        console.error(error);
+    // Check if any symptoms were found
+    if (result.rows.length > 0) {
+      res.status(200).json(result.rows);
+    } else {
+      res.status(404).json({ message: 'No symptoms found for the specified disease' });
     }
+  } catch (error) {
+    console.error('Error retrieving symptoms for the disease:', error);
+    res.status(500).json({ error: 'Error executing the query' });
+  }
 });
 
 module.exports = router;

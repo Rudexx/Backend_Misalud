@@ -8,6 +8,7 @@ const enfermedadRoutes = require('./routes/enfermedadRoutes');
 const medicamentRoutes = require('./routes/medicamentoRoute');
 const sintomasRoutes = require('./routes/sintomasRoutes');
 const diagnosticoRoute = require('./routes/diagnosticoRoute');
+const recordatorioRoute = require('./routes/recordatorioRoutes');
 
 
 // Middleware
@@ -28,6 +29,7 @@ app.use('/api/diseases', enfermedadRoutes);
 app.use('/api/medicines', medicamentRoutes);
 app.use('/api/diagnostics', diagnosticoRoute);
 app.use('/api/symptoms', sintomasRoutes);
+app.use('/api/reminders', recordatorioRoute);
 
 
 const PORT = process.env.PORT || 3000;

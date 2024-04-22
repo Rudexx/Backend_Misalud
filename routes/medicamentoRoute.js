@@ -24,7 +24,6 @@ router.post('/register', async (req, res) => {
       console.error('Error registering medication:', error);
       res.status(500).json({ error: 'Error executing the query' });
     } finally {
-      client.release();
     }
   });
   
@@ -34,7 +33,7 @@ router.get('/:id', async (req, res) => {
     try {
         const client = await pool.connect();
 
-        const result = await client.query('SELECT * FROM Medicamento WHERE id = $1', [id]);
+        const result = await client.query('SELECT * FROM Medicamento WHERE med_id = $1', [id]);
 
         if (result.rows.length > 0) {
             const medicationData = result.rows[0];

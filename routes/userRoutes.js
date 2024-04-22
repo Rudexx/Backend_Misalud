@@ -17,6 +17,25 @@ router.post('/register', async (req, res) => {
     }
   });
 
+  router.get('/reminders/:correo', async (req, res) => {
+    const { correo } = req.params; // or req.body, if you're using a POST request
+    try {
+        const client = await pool.connect();
+
+        const result = await client.query('SELECT * FROM recordatorio WHERE correo = $1', [correo]);
+        
+        if (result.rowCount > 0) {
+            res.status(200).json(result.rows);
+        } else {
+            res.status(404).send('No reminders found for the given user');
+        }
+    } catch (error) {
+        res.status(500).send('Error fetching reminders');
+        console.error(error);
+    }
+});
+
+
   router.post('/login', async (req, res) => {
     const {password, correo,} = req.body;
     try {
